@@ -12,14 +12,14 @@ namespace Quantum.Platformer
 	public unsafe class GameplaySystem : SystemMainThread, ISignalOnPlayerAdded, ISignalOnPlayerRemoved,
 		ISignalPlayerFell, ISignalOnTrigger3D
 	{
+		private static readonly FP TileSize = FP._1;
+		private static readonly FPVector3 GridOrigin = FPVector3.Zero;
+
 		public EntityPrototype GreenBeanPrototype;
 
         public override void OnInit(Frame f)
         {
 			GreenBeanPrototype = f.FindAsset<EntityPrototype>("Prefabs/GreenBeanEntityPrototype");
-
-			EntityRef bean = f.Create(GreenBeanPrototype);
-			f.Unsafe.GetPointer<Transform3D>(bean)->Position = FPVector3.Zero;
         }
 
 		public override void Update(Frame frame)
@@ -39,6 +39,20 @@ namespace Quantum.Platformer
 				else if (growable->Age >= 100) growable->Stage = GrowableStage.Emerging;
 				else growable->Stage = GrowableStage.Seed;
 
+			}
+
+			foreach (var playerLinkPair in frame.GetComponentIterator<PlayerLink>())
+			{
+				var input = frame.GetPlayerInput(playerLinkPair.Component.PlayerRef);
+				if (input->Fire.WasPressed == false)
+					continue;
+
+				var plantPosition = SnapToTileCenter(input->PlantPosition);
+				if (IsTileOccupied(frame, plantPosition))
+					continue;
+
+				EntityRef bean = frame.Create(GreenBeanPrototype);
+				frame.Unsafe.GetPointer<Transform3D>(bean)->Position = plantPosition;
 			}
 
 			// Reset game state when game over timer expires
@@ -148,6 +162,31 @@ namespace Quantum.Platformer
 			var rotation = FPQuaternion.Euler(18, 90, 0);
 
 			return (position, rotation);
+		}
+
+		private static FPVector3 SnapToTileCenter(FPVector3 position)
+		{
+			var relative = position - GridOrigin;
+			var tileX = FPMath.FloorToInt(relative.X / TileSize);
+			var tileZ = FPMath.FloorToInt(relative.Z / TileSize);
+
+			return new FPVector3(
+				GridOrigin.X + (tileX + FP._0_50) * TileSize,
+				GridOrigin.Y,
+				GridOrigin.Z + (tileZ + FP._0_50) * TileSize);
+		}
+
+		private static bool IsTileOccupied(Frame frame, FPVector3 tileCenter)
+		{
+			var growables = frame.Unsafe.GetComponentBlockIterator<QGrowable>();
+			foreach (var growablePair in growables)
+			{
+				var transform = frame.Unsafe.GetPointer<Transform3D>(growablePair.Entity);
+				if (transform->Position == tileCenter)
+					return true;
+			}
+
+			return false;
 		}
 	}
 }

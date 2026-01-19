@@ -5,4 +5,5 @@ input
     button    Sprint;
     button    Jump;
     button    Fire;
+    FPVector3 PlantPosition;
 }

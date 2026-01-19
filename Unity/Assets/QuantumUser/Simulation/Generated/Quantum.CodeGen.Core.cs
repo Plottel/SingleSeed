@@ -539,18 +539,20 @@ namespace Quantum {
   }
   [StructLayout(LayoutKind.Explicit)]
   public unsafe partial struct Input {
-    public const Int32 SIZE = 72;
+    public const Int32 SIZE = 96;
     public const Int32 ALIGNMENT = 8;
-    [FieldOffset(56)]
-    public FPVector2 MoveDirection;
-    [FieldOffset(40)]
-    public FPVector2 LookRotation;
-    [FieldOffset(24)]
-    public Button Sprint;
-    [FieldOffset(12)]
-    public Button Jump;
     [FieldOffset(0)]
     public Button Fire;
+    [FieldOffset(12)]
+    public Button Jump;
+    [FieldOffset(24)]
+    public Button Sprint;
+    [FieldOffset(40)]
+    public FPVector2 LookRotation;
+    [FieldOffset(56)]
+    public FPVector2 MoveDirection;
+    [FieldOffset(72)]
+    public FPVector3 PlantPosition;
     public override readonly Int32 GetHashCode() {
       unchecked { 
         var hash = 19249;
@@ -559,6 +561,7 @@ namespace Quantum {
         hash = hash * 31 + Sprint.GetHashCode();
         hash = hash * 31 + Jump.GetHashCode();
         hash = hash * 31 + Fire.GetHashCode();
+        hash = hash * 31 + PlantPosition.GetHashCode();
         return hash;
       }
     }
@@ -588,6 +591,7 @@ namespace Quantum {
         Button.Serialize(&p->Sprint, serializer);
         FPVector2.Serialize(&p->LookRotation, serializer);
         FPVector2.Serialize(&p->MoveDirection, serializer);
+        FPVector3.Serialize(&p->PlantPosition, serializer);
     }
   }
   [StructLayout(LayoutKind.Explicit)]
